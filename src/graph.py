@@ -10,7 +10,7 @@ class TestRepository:
     def __init__(self, filename):
         """Validate declarations and references before traversal."""
         self.rows = {}
-        lines = Path(filename).read_text().splitlines()
+        lines = Path(filename).read_text(encoding="utf-8").splitlines()
         for number, line in enumerate(lines, 1):
             line = line.split("#", 1)[0].strip()
             if not line:
@@ -25,9 +25,8 @@ class TestRepository:
         referenced = {c for row in self.rows.values() for c in row}
         missing = referenced - self.rows.keys()
         if missing:
-            raise ValueError(
-                "undeclared packages: " + ", ".join(sorted(missing))
-            )
+            packages = ", ".join(sorted(missing))
+            raise ValueError(f"undeclared packages: {packages}")
 
     def direct(self, node):
         """Return children of a named package from the fixture."""

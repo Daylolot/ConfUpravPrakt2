@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 
 from maven import Dependency, MavenRepository
 from graph import TestRepository, build_graph
+from render import ascii_tree, mermaid
 
 
 def parse_options():
@@ -76,13 +77,12 @@ def report_cycles(cycles):
 
 
 def run(config):
-    """Print a dependency-first order for an acyclic graph."""
-    _, (_, cycles, finished) = load_graph(config)
+    """Print Mermaid by default or ASCII when requested."""
+    root, (edges, cycles, _) = load_graph(config)
     report_cycles(cycles)
-    if cycles:
-        raise ValueError("no dependency-first order exists for a cyclic graph")
-    for number, node in enumerate(finished, 1):
-        print(f"{number}. {label(node)}")
+    lines = (ascii_tree(root, edges, label) if config.ascii
+             else mermaid(edges, label))
+    print("\n".join(lines))
 
 
 def main():

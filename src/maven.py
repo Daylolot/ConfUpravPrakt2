@@ -68,18 +68,16 @@ class MavenRepository:
     def model(self, dep, parents=()):
         """Merge parent properties, managed versions, and declarations."""
         if dep in parents or len(parents) >= 32:
-            raise ValueError(
-                f"cyclic or excessive POM inheritance: {dep.label}"
-            )
+            raise ValueError(f"invalid POM inheritance chain: {dep.label}")
         if dep in self.cache:
             return self.cache[dep]
         root = read_pom(self.repo, dep.group, dep.artifact, dep.version)
         props, managed, rows = {}, {}, {}
         parent = root.find("parent")
         if parent is not None:
+            coordinates = ("groupId", "artifactId", "version")
             parent_dep = Dependency(*(parent.findtext(field, "").strip()
-                                      for field in
-                                      ("groupId", "artifactId", "version")))
+                                      for field in coordinates))
             inherited = self.model(parent_dep, parents + (dep,))
             props, managed, rows = (item.copy() for item in inherited)
         props.update({node.tag: (node.text or "").strip()
@@ -94,14 +92,19 @@ class MavenRepository:
             return {child.tag: expand((child.text or "").strip(), props)
                     for child in node}
 
+        def identity(item):
+            """Distinguish ordinary and test JAR declarations."""
+            return (item.get("groupId"), item.get("artifactId"),
+                    item.get("type", "jar"), item.get("classifier", ""))
+
         management = "dependencyManagement/dependencies/dependency"
         for node in root.findall(management):
             item = fields(node)
             if item.get("scope") != "import":
-                managed[item.get("groupId"), item.get("artifactId")] = item
+                managed[identity(item)] = item
         for node in root.findall("dependencies/dependency"):
             item = fields(node)
-            rows[item.get("groupId"), item.get("artifactId")] = item
+            rows[identity(item)] = item
         self.cache[dep] = props, managed, rows
         return self.cache[dep]
 
