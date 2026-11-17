@@ -6,6 +6,8 @@ import re
 import sys
 from urllib.parse import urlsplit
 
+from maven import Dependency, MavenRepository
+
 
 def parse_options():
     """Read and validate the five user-configurable options."""
@@ -43,9 +45,15 @@ def parse_options():
 
 
 def run(config):
-    """Print the prototype configuration as key-value pairs."""
-    for key, value in vars(config).items():
-        print(f"{key}={value}")
+    """Print direct Maven dependencies for the selected package version."""
+    if config.test:
+        raise ValueError("test repository support starts at stage 3")
+    root = Dependency(*config.package.split(":"), config.version)
+    dependencies = MavenRepository(config.repo).direct(root)
+    print(f"Direct dependencies of {root.label}:")
+    for dep in dependencies:
+        suffix = ", optional" if dep.optional else ""
+        print(f"{dep.label} [{dep.scope}{suffix}]")
 
 
 def main():
