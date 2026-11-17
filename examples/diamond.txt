@@ -1,0 +1,5 @@
+# Each package is declared once. All test packages have version 1.0.
+A: B C
+B: D
+C: D
+D:
