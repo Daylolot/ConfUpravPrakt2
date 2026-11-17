@@ -76,11 +76,13 @@ def report_cycles(cycles):
 
 
 def run(config):
-    """Print the reachable graph and diagnose cycles."""
-    _, (edges, cycles, _) = load_graph(config)
-    for node, children in edges.items():
-        print(f"{label(node)}: {', '.join(map(label, children))}")
+    """Print a dependency-first order for an acyclic graph."""
+    _, (_, cycles, finished) = load_graph(config)
     report_cycles(cycles)
+    if cycles:
+        raise ValueError("no dependency-first order exists for a cyclic graph")
+    for number, node in enumerate(finished, 1):
+        print(f"{number}. {label(node)}")
 
 
 def main():
