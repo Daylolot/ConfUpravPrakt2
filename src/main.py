@@ -7,6 +7,7 @@ import sys
 from urllib.parse import urlsplit
 
 from maven import Dependency, MavenRepository
+from graph import TestRepository, build_graph
 
 
 def parse_options():
@@ -44,16 +45,42 @@ def parse_options():
     return config
 
 
-def run(config):
-    """Print direct Maven dependencies for the selected package version."""
+def load_graph(config):
+    """Select a data source and traverse the requested package."""
     if config.test:
-        raise ValueError("test repository support starts at stage 3")
+        if config.version != "1.0":
+            raise ValueError("test packages have version 1.0")
+        root = config.package
+        return root, build_graph(root, TestRepository(config.repo).direct)
     root = Dependency(*config.package.split(":"), config.version)
-    dependencies = MavenRepository(config.repo).direct(root)
-    print(f"Direct dependencies of {root.label}:")
-    for dep in dependencies:
-        suffix = ", optional" if dep.optional else ""
-        print(f"{dep.label} [{dep.scope}{suffix}]")
+    repo = MavenRepository(config.repo)
+
+    def direct(node):
+        """Return runtime graph children with coordinate-based identity."""
+        return [Dependency(dep.group, dep.artifact, dep.version)
+                for dep in repo.direct(node, {"compile", "runtime"})
+                if node == root or not dep.optional]
+
+    return root, build_graph(root, direct)
+
+
+def label(node):
+    """Return a display name for a fixture or Maven package."""
+    return node if isinstance(node, str) else node.label
+
+
+def report_cycles(cycles):
+    """Print cycle paths without changing the dependency graph."""
+    for path in cycles:
+        print("cycle: " + " -> ".join(map(label, path)), file=sys.stderr)
+
+
+def run(config):
+    """Print the reachable graph and diagnose cycles."""
+    _, (edges, cycles, _) = load_graph(config)
+    for node, children in edges.items():
+        print(f"{label(node)}: {', '.join(map(label, children))}")
+    report_cycles(cycles)
 
 
 def main():
@@ -61,7 +88,7 @@ def main():
     config = parse_options()
     try:
         run(config)
-    except (OSError, ValueError) as error:
+    except (OSError, ValueError, RecursionError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     return 0
