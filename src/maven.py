@@ -136,31 +136,38 @@ class MavenRepository:
     def direct(self, dep, scopes=None):
         """Return dependencies for the requested version and scopes."""
         props, managed, rows = self.model(dep)
+
+        def identity(row):
+            """Resolve identity separately from a possibly unused version."""
+            defaults = (("groupId", ""), ("artifactId", ""),
+                        ("type", "jar"), ("classifier", ""))
+            return tuple(expand(row.get(name, default), props)
+                         for name, default in defaults)
+
         resolved_managed = {}
         for row in managed.values():
-            values = {key: expand(value, props, strict=False)
-                      for key, value in row.items()}
-            key = (values.get("groupId"), values.get("artifactId"),
-                   values.get("type", "jar"), values.get("classifier", ""))
-            resolved_managed[key] = values
+            resolved_managed[identity(row)] = row
         result = []
         for row in rows.values():
-            row = {key: expand(value, props) for key, value in row.items()}
-            key = (row.get("groupId"), row.get("artifactId"),
-                   row.get("type", "jar"), row.get("classifier", ""))
-            item = {name: expand(value, props) for name, value in
-                    (resolved_managed.get(key, {}) | row).items()}
+            key = identity(row)
+            item = resolved_managed.get(key, {}) | row
             scope = expand(item.get("scope", "compile"), props)
             scopes_known = {"compile", "runtime", "provided", "test", "system"}
             if scope not in scopes_known:
                 raise ValueError(f"unsupported dependency scope: {scope}")
             if scopes is not None and scope not in scopes:
                 continue
+            item = {name: expand(value, props)
+                    for name, value in item.items()}
             group, artifact = (item.get(field, "") for field in
                                ("groupId", "artifactId"))
             version = expand(item.get("version", ""), props)
             if not group or not artifact or not version or "${" in version:
                 raise ValueError(f"unresolved dependency {key} in {dep.label}")
+            name = r"[A-Za-z0-9_][A-Za-z0-9_.+-]*"
+            coordinates = (group, artifact)
+            if not all(re.fullmatch(name, value) for value in coordinates):
+                raise ValueError(f"invalid dependency in {dep.label}")
             if version in {"LATEST", "RELEASE"}:
                 raise ValueError("dependency version must be fixed")
             if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.+-]*", version):
