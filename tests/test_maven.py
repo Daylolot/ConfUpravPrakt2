@@ -98,6 +98,19 @@ class MavenModelTests(unittest.TestCase):
                 Dependency("g", "app", "1"), {"compile", "runtime"})
         self.assertEqual(actual, [Dependency("g", "lib", "1")])
 
+    def test_unused_test_version_is_not_resolved(self):
+        """Skip test dependencies before resolving their unused properties."""
+        app = xml("""
+          <project><dependencies><dependency>
+            <groupId>g</groupId><artifactId>tests</artifactId>
+            <version>${test.only}</version><scope>test</scope>
+          </dependency></dependencies></project>
+        """)
+        with patch("maven.read_pom", return_value=app):
+            actual = MavenRepository("https://example.invalid").direct(
+                Dependency("g", "app", "1"), {"compile", "runtime"})
+        self.assertEqual(actual, [])
+
     def test_recursive_parent_is_reported(self):
         """Stop recursive POM inheritance with a useful data error."""
         app = xml("""
