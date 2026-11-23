@@ -22,7 +22,8 @@ def parse_options():
                         help="exact package version")
     parser.add_argument("--ascii", action="store_true", help="print ASCII tree")
     config = parser.parse_args()
-    if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.+-]*", config.version):
+    if (not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.+-]*", config.version)
+            or config.version in {"LATEST", "RELEASE"}):
         parser.error("--version: expected a fixed version, such as 1.0")
     name_pattern = r"[A-Z]" if config.test else (
         r"[A-Za-z0-9_][A-Za-z0-9_.-]*:[A-Za-z0-9_][A-Za-z0-9_.-]*"

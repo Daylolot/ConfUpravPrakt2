@@ -1,13 +1,14 @@
 # Защита второй работы — вариант № 9
 
 Все команды выполняются в обычном Терминале Mac из папки проекта.
-Команды `git switch` предполагают чистую рабочую копию. При переходе
+Команды `git switch` предполагают чистую рабочую копию. После клонирования
+используются удалённые ветки `origin/stage-N`. При переходе
 на ранний этап этот файл временно исчезнет: держи инструкцию открытой.
 
 ## 1. Конфигурация
 
 ```bash
-git switch --detach stage-1
+git switch --detach origin/stage-1
 sh examples/stage1.sh
 ```
 
@@ -20,7 +21,7 @@ sh examples/stage1.sh
 ## 2. Прямые зависимости
 
 ```bash
-git switch --detach stage-2
+git switch --detach origin/stage-2
 repo=https://repo.maven.apache.org/maven2
 python3 src/main.py --package junit:junit --version 4.13.2 --repo "$repo"
 ```
@@ -34,7 +35,7 @@ XML и читаю секцию зависимостей. Maven для этого
 ## 3. DFS и циклы
 
 ```bash
-git switch --detach stage-3
+git switch --detach origin/stage-3
 python3 src/main.py --package A --version 1.0 --test --repo examples/diamond.txt
 python3 src/main.py --package A --version 1.0 --test --repo examples/cycle.txt
 python3 src/main.py --package A --version 1.0 --test --repo examples/leaf.txt
@@ -49,7 +50,7 @@ python3 src/main.py --package A --version 1.0 --test --repo examples/leaf.txt
 ## 4. Порядок загрузки и Maven
 
 ```bash
-git switch --detach stage-4
+git switch --detach origin/stage-4
 repo=https://repo.maven.apache.org/maven2
 python3 src/main.py --package A --version 1.0 --test --repo examples/diamond.txt
 python3 src/main.py --package A --version 1.0 --test --repo examples/leaf.txt
@@ -74,7 +75,7 @@ sh examples/compare-maven.sh junit tree
 ## 5. Mermaid, ASCII и три пакета
 
 ```bash
-git switch --detach stage-5
+git switch --detach origin/stage-5
 repo=https://repo.maven.apache.org/maven2
 python3 src/main.py --package junit:junit --version 4.13.2 --repo "$repo"
 python3 src/main.py --package org.apache.commons:commons-text --version 1.12.0 --repo "$repo"

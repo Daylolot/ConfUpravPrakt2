@@ -1,0 +1,17 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< edu.demo:maven-reference >----------------------
+[INFO] Building maven-reference 1.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.8.1:tree (default-cli) @ maven-reference ---
+[INFO] edu.demo:maven-reference:jar:1.0
+[INFO] \- org.apache.commons:commons-text:jar:1.12.0:compile
+[INFO]    \- org.apache.commons:commons-lang3:jar:3.14.0:compile
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  0.696 s
+[INFO] Finished at: 2026-11-23T21:02:35+03:00
+[INFO] ------------------------------------------------------------------------
